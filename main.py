@@ -111,7 +111,7 @@ for i in range(3):
     for j in range(3):
         ax = axes[i, j]
         image = batch[0][i * 3 + j]
-        net_input = image.reshape((1, 64, 64, 3))
+        net_input = image #.reshape((1, 64, 64, 3))
         truth = np.argmax(batch[1][i * 3 + j])
         prediction = np.argmax(model.predict(net_input))
         ax.set_title('Label: %s\nPrediction: %s' % (labels[truth].capitalize(), labels[prediction].capitalize()))
@@ -119,10 +119,10 @@ for i in range(3):
 
 
 def custom_predictions(path):
-    img = ig.load_img(path, target_size=(64, 64))
+    img = ig.load_img(path) #, target_size=(64, 64)
     plt.imshow(img)
     img = np.expand_dims(img, axis=0)
-    img.reshape(1, 64, 64, 3)
+    #img.reshape(1, 64, 64, 3)
     prediction = np.argmax(model.predict(img))
     plt.title(labels[prediction])
     plt.show()
