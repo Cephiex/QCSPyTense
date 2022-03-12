@@ -9,14 +9,15 @@ from tensorflow.keras.preprocessing import image as ig
 from tensorflow.keras.preprocessing.image import img_to_array
 import random
 
-train_dir = 'data1a/training'
-test_dir = 'data1a/validation'
+train_dir = 'Data'
+test_dir = 'Validation'
 
 train_data = ImageDataGenerator(rescale=1. / 255, shear_range=0.2, zoom_range=0.2, horizontal_flip=True)
 
 # defining training set, here size of image is reduced to 150x150, batch of images is kept as 128 and class is
 # defined as 'categorical'.
-training_set = train_data.flow_from_directory(train_dir, batch_size=32, target_size=(64, 64), class_mode='categorical')
+training_set = train_data.flow_from_directory(train_dir, batch_size=32, target_size=(1600, 1600),
+                                              class_mode='categorical')
 
 # applying same scale as training set, but only feature scaling is applied. image augmentation is avoided to prevent
 # leakage of testing data.
@@ -27,7 +28,7 @@ testing_set = test_data.flow_from_directory(test_dir, batch_size=32, target_size
 
 checkpoint = ModelCheckpoint(
     './base.model',
-    monitor='val_accuracy',
+    monitor='accuracy',
     verbose=1,
     save_best_only=True,
     mode='max',
@@ -35,7 +36,7 @@ checkpoint = ModelCheckpoint(
     save_frequency=1
 )
 earlystop = EarlyStopping(
-    monitor='val_loss',
+    monitor='loss',
     min_delta=0.001,
     patience=50,
     verbose=1,
@@ -96,3 +97,32 @@ def show_final_history(history):
 show_final_history(history)
 model.save("model.h5")
 print("Weights Saved")
+
+labels = ["00-damage", "01-whole"]
+
+it = iter(testing_set)
+batch = next(it)  # Gets a batch of 16 test images
+
+fig, axes = plt.subplots(3, 3, figsize=(10, 10))
+fig.tight_layout()
+fig.subplots_adjust(hspace=.25)
+
+for i in range(3):
+    for j in range(3):
+        ax = axes[i, j]
+        image = batch[0][i * 3 + j]
+        net_input = image.reshape((1, 64, 64, 3))
+        truth = np.argmax(batch[1][i * 3 + j])
+        prediction = np.argmax(model.predict(net_input))
+        ax.set_title('Label: %s\nPrediction: %s' % (labels[truth].capitalize(), labels[prediction].capitalize()))
+        ax.imshow(image)
+
+
+def custom_predictions(path):
+    img = ig.load_img(path, target_size=(64, 64))
+    plt.imshow(img)
+    img = np.expand_dims(img, axis=0)
+    img.reshape(1, 64, 64, 3)
+    prediction = np.argmax(model.predict(img))
+    plt.title(labels[prediction])
+    plt.show()
